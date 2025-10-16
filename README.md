@@ -6,6 +6,11 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License">
 </p>
 
+<p align="center">
+  <a href="README.md">🇻🇳 Tiếng Việt</a> •
+  <a href="README.en.md">🇬🇧 English</a>
+</p>
+
 **AppImage GUI Launcher** là một công cụ đơn giản giúp bạn chạy và tích hợp file AppImage vào hệ thống Ubuntu/Linux thông qua giao diện đồ họa (GUI) - không cần dùng dòng lệnh!
 
 ## ✨ Tính năng
