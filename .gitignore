@@ -1,0 +1,27 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore test AppImage files
+*.AppImage
+test/
+examples/
+
+# Ignore log files
+*.log
+
+# Ignore OS-specific files
+.directory

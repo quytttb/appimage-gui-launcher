@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AppImage Launcher
+Comment=Run or integrate AppImage files with GUI
+Exec=/usr/local/bin/appimage-launcher %f
+Icon=application-x-executable
+Terminal=false
+Categories=Utility;System;
+MimeType=application/x-iso9660-appimage;application/vnd.appimage;
+NoDisplay=true

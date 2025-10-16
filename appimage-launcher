@@ -1,0 +1,112 @@
+#!/bin/bash
+# AppImage GUI Launcher - Double-click to run or integrate AppImage
+
+APPIMAGE_FILE="$1"
+APPIMAGE_DIR="$HOME/Applications"
+
+# Check if zenity is installed
+if ! command -v zenity &> /dev/null; then
+    notify-send "Error" "Zenity is not installed. Please install it: sudo apt-get install zenity"
+    exit 1
+fi
+
+# Check if file exists
+if [ ! -f "$APPIMAGE_FILE" ]; then
+    zenity --error --text="File không tồn tại!" --width=300
+    exit 1
+fi
+
+# Show dialog asking user what to do
+ACTION=$(zenity --list \
+    --title="AppImage Launcher" \
+    --text="Bạn muốn làm gì với file AppImage này?\n\nFile: $(basename "$APPIMAGE_FILE")" \
+    --column="Hành động" \
+    --column="Mô tả" \
+    --width=550 --height=300 \
+    "run" "Chạy một lần (không tích hợp vào hệ thống)" \
+    "integrate" "Tích hợp vào hệ thống và chạy (giữ nguyên vị trí file)" \
+    "move-integrate" "Di chuyển vào ~/Applications và tích hợp vào hệ thống")
+
+case "$ACTION" in
+    "run")
+        # Just run once without integrating
+        chmod +x "$APPIMAGE_FILE"
+        "$APPIMAGE_FILE" &
+        ;;
+        
+    "integrate")
+        # Integrate but keep file in current location
+        APPIMAGE_NAME=$(basename "$APPIMAGE_FILE" .AppImage)
+        APPIMAGE_PATH=$(realpath "$APPIMAGE_FILE")
+        
+        chmod +x "$APPIMAGE_PATH"
+        
+        # Create desktop entry
+        mkdir -p ~/.local/share/applications
+        cat > ~/.local/share/applications/"$APPIMAGE_NAME".desktop <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=$APPIMAGE_NAME
+Comment=AppImage application
+Exec=$APPIMAGE_PATH
+Icon=application-x-executable
+Terminal=false
+Categories=Utility;
+EOF
+        
+        update-desktop-database ~/.local/share/applications/ 2>/dev/null
+        
+        zenity --info --width=400 \
+            --text="✓ Đã tích hợp <b>$APPIMAGE_NAME</b> vào menu ứng dụng!\n\nBạn có thể tìm ứng dụng trong menu để chạy.\nVị trí file: $APPIMAGE_PATH"
+        
+        # Run the application
+        "$APPIMAGE_PATH" &
+        ;;
+        
+    "move-integrate")
+        # Move to ~/Applications and integrate
+        mkdir -p "$APPIMAGE_DIR"
+        APPIMAGE_NAME=$(basename "$APPIMAGE_FILE" .AppImage)
+        NEW_PATH="$APPIMAGE_DIR/$APPIMAGE_NAME.AppImage"
+        
+        # Check if file already exists
+        if [ -f "$NEW_PATH" ]; then
+            if ! zenity --question --width=400 \
+                --text="File <b>$APPIMAGE_NAME.AppImage</b> đã tồn tại trong ~/Applications.\n\nBạn có muốn ghi đè không?"; then
+                exit 0
+            fi
+        fi
+        
+        # Move file
+        mv "$APPIMAGE_FILE" "$NEW_PATH"
+        chmod +x "$NEW_PATH"
+        
+        # Create desktop entry
+        mkdir -p ~/.local/share/applications
+        cat > ~/.local/share/applications/"$APPIMAGE_NAME".desktop <<EOF
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=$APPIMAGE_NAME
+Comment=AppImage application
+Exec=$NEW_PATH
+Icon=application-x-executable
+Terminal=false
+Categories=Utility;
+EOF
+        
+        update-desktop-database ~/.local/share/applications/ 2>/dev/null
+        
+        zenity --info --width=400 \
+            --text="✓ Đã di chuyển vào <b>$APPIMAGE_DIR</b>\n✓ Đã tích hợp <b>$APPIMAGE_NAME</b> vào menu ứng dụng!\n\nBạn có thể tìm ứng dụng trong menu để chạy."
+        
+        # Run the application
+        "$NEW_PATH" &
+        ;;
+        
+    *)
+        # User closed dialog or cancelled
+        exit 0
+        ;;
+esac
