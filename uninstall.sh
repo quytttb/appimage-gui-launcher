@@ -25,10 +25,21 @@ if [ -f /usr/local/bin/appimage-launcher ]; then
     echo "✓ Removed /usr/local/bin/appimage-launcher"
 fi
 
-# Remove the desktop file
+# Remove the manager script
+if [ -f /usr/local/bin/appimage-manager ]; then
+    sudo rm /usr/local/bin/appimage-manager
+    echo "✓ Removed /usr/local/bin/appimage-manager"
+fi
+
+# Remove the desktop files
 if [ -f ~/.local/share/applications/appimage-launcher.desktop ]; then
     rm ~/.local/share/applications/appimage-launcher.desktop
-    echo "✓ Removed desktop entry"
+    echo "✓ Removed appimage-launcher desktop entry"
+fi
+
+if [ -f ~/.local/share/applications/appimage-manager.desktop ]; then
+    rm ~/.local/share/applications/appimage-manager.desktop
+    echo "✓ Removed appimage-manager desktop entry"
 fi
 
 # Reset default handler for AppImage files

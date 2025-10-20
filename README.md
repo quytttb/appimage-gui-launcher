@@ -22,7 +22,9 @@
   - Di chuyển vào ~/Applications và tích hợp
 - 📱 **Tích hợp menu** - Tạo shortcut trong menu ứng dụng tự động
 - 🗂️ **Quản lý tập trung** - Tất cả AppImage được lưu ở ~/Applications
-- 💻 **Giao diện đẹp** - Sử dụng Zenity cho dialog đẹp mắt
+- �️ **Gỡ cài đặt dễ dàng** - AppImage Manager giúp gỡ AppImage đã cài bằng GUI
+- 🧹 **Dọn dẹp tự động** - Xóa các desktop entries không hợp lệ
+- �💻 **Giao diện đẹp** - Sử dụng Zenity cho dialog đẹp mắt
 
 ## 📸 Screenshots
 
@@ -100,7 +102,47 @@ xdg-mime default appimage-launcher.desktop application/x-iso9660-appimage
 appimage-launcher /path/to/your-app.AppImage
 ```
 
-## 🗂️ Cấu trúc thư mục
+## �️ Gỡ cài đặt AppImage
+
+### Cách 1: Dùng AppImage Manager (Khuyên dùng)
+
+1. Mở **AppImage Manager** từ menu ứng dụng (System → AppImage Manager)
+2. Chọn "Gỡ cài đặt AppImage"
+3. Chọn AppImage bạn muốn gỡ
+4. Xác nhận → Xong!
+
+### Cách 2: Từ terminal
+
+```bash
+# Mở AppImage Manager
+appimage-manager
+
+# Hoặc gỡ trực tiếp
+appimage-manager --uninstall /path/to/app.AppImage
+```
+
+### Cách 3: Thủ công
+
+```bash
+# Xóa file AppImage
+rm ~/Applications/app-name.AppImage
+
+# Xóa desktop entry
+rm ~/.local/share/applications/app-name.desktop
+
+# Cập nhật database
+update-desktop-database ~/.local/share/applications/
+```
+
+## 🧹 Dọn dẹp hệ thống
+
+AppImage Manager cũng có tính năng dọn dẹp desktop entries không hợp lệ (khi AppImage đã bị xóa nhưng shortcut còn lại):
+
+1. Mở **AppImage Manager**
+2. Chọn "Dọn dẹp desktop entries không hợp lệ"
+3. Xong!
+
+## �🗂️ Cấu trúc thư mục
 
 ```
 ~/.local/share/applications/    # Desktop entries (shortcuts)

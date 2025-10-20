@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=AppImage Manager
+Name[vi]=Quản lý AppImage
+Comment=Manage installed AppImage applications
+Comment[vi]=Quản lý các ứng dụng AppImage đã cài đặt
+Exec=/usr/local/bin/appimage-manager
+Icon=system-software-install
+Terminal=false
+Categories=System;Settings;PackageManager;
+Keywords=appimage;uninstall;remove;manager;

@@ -1,0 +1,222 @@
+#!/bin/bash
+# AppImage Manager - Manage installed AppImages
+
+APPIMAGE_DIR="$HOME/Applications"
+DESKTOP_DIR="$HOME/.local/share/applications"
+
+# Check if zenity is installed
+if ! command -v zenity &> /dev/null; then
+    echo "Error: Zenity is not installed. Please install it: sudo apt-get install zenity"
+    exit 1
+fi
+
+# Function to list installed AppImages
+list_appimages() {
+    local appimages=()
+    
+    # Find all .AppImage files in Applications directory
+    if [ -d "$APPIMAGE_DIR" ]; then
+        while IFS= read -r -d '' file; do
+            local basename=$(basename "$file")
+            appimages+=("FALSE" "$basename" "$file")
+        done < <(find "$APPIMAGE_DIR" -maxdepth 1 -name "*.AppImage" -type f -print0 2>/dev/null)
+    fi
+    
+    # Find AppImages from desktop entries
+    if [ -d "$DESKTOP_DIR" ]; then
+        while IFS= read -r desktop_file; do
+            if grep -q "\.AppImage" "$desktop_file" 2>/dev/null; then
+                local exec_line=$(grep "^Exec=" "$desktop_file" | head -1)
+                local appimage_path=$(echo "$exec_line" | sed 's/^Exec=//' | awk '{print $1}')
+                if [ -f "$appimage_path" ] && [[ "$appimage_path" == *.AppImage ]]; then
+                    local basename=$(basename "$appimage_path")
+                    # Check if not already in list
+                    if [[ ! " ${appimages[@]} " =~ " ${basename} " ]]; then
+                        appimages+=("FALSE" "$basename" "$appimage_path")
+                    fi
+                fi
+            fi
+        done < <(find "$DESKTOP_DIR" -maxdepth 1 -name "*.desktop" -type f 2>/dev/null)
+    fi
+    
+    echo "${appimages[@]}"
+}
+
+# Function to uninstall AppImage
+uninstall_appimage() {
+    local appimage_path="$1"
+    local appimage_name=$(basename "$appimage_path" .AppImage)
+    
+    # Confirm uninstallation
+    if ! zenity --question --width=400 \
+        --title="Xác nhận gỡ cài đặt" \
+        --text="Bạn có chắc muốn gỡ cài đặt <b>$appimage_name</b>?\n\nĐiều này sẽ xóa:\n• File AppImage\n• Shortcut trong menu\n• Dữ liệu cấu hình (nếu có)"; then
+        return 0
+    fi
+    
+    local errors=""
+    
+    # Remove desktop entry
+    if [ -f "$DESKTOP_DIR/$appimage_name.desktop" ]; then
+        rm "$DESKTOP_DIR/$appimage_name.desktop" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "✓ Removed desktop entry"
+        else
+            errors="$errors\n• Failed to remove desktop entry"
+        fi
+    fi
+    
+    # Remove AppImage file
+    if [ -f "$appimage_path" ]; then
+        rm "$appimage_path" 2>/dev/null
+        if [ $? -eq 0 ]; then
+            echo "✓ Removed AppImage file"
+        else
+            errors="$errors\n• Failed to remove AppImage file (may need sudo)"
+        fi
+    fi
+    
+    # Update desktop database
+    update-desktop-database "$DESKTOP_DIR" 2>/dev/null
+    
+    if [ -z "$errors" ]; then
+        zenity --info --width=400 \
+            --title="Thành công" \
+            --text="✓ Đã gỡ cài đặt <b>$appimage_name</b> thành công!\n\nFile đã được xóa:\n• $appimage_path\n• Desktop shortcut"
+    else
+        zenity --warning --width=400 \
+            --title="Hoàn tất với lỗi" \
+            --text="Đã gỡ cài đặt <b>$appimage_name</b> nhưng có một số lỗi:$errors"
+    fi
+}
+
+# Main menu
+show_main_menu() {
+    local choice=$(zenity --list \
+        --title="AppImage Manager" \
+        --text="Quản lý AppImage đã cài đặt" \
+        --column="Chọn" \
+        --column="Hành động" \
+        --width=500 --height=300 \
+        "uninstall" "Gỡ cài đặt AppImage" \
+        "list" "Xem danh sách AppImage đã cài" \
+        "clean" "Dọn dẹp desktop entries không hợp lệ")
+    
+    case "$choice" in
+        "uninstall")
+            show_uninstall_dialog
+            ;;
+        "list")
+            show_list_dialog
+            ;;
+        "clean")
+            clean_invalid_entries
+            ;;
+        *)
+            exit 0
+            ;;
+    esac
+}
+
+# Show uninstall dialog
+show_uninstall_dialog() {
+    local appimages=($(list_appimages))
+    
+    if [ ${#appimages[@]} -eq 0 ]; then
+        zenity --info --width=400 \
+            --title="Không có AppImage" \
+            --text="Không tìm thấy AppImage nào đã được cài đặt.\n\nVị trí tìm kiếm:\n• $APPIMAGE_DIR\n• Desktop entries trong $DESKTOP_DIR"
+        return
+    fi
+    
+    local selected=$(zenity --list \
+        --title="Gỡ cài đặt AppImage" \
+        --text="Chọn AppImage bạn muốn gỡ cài đặt:" \
+        --radiolist \
+        --column="Chọn" \
+        --column="Tên" \
+        --column="Đường dẫn" \
+        --width=700 --height=400 \
+        "${appimages[@]}")
+    
+    if [ -n "$selected" ]; then
+        uninstall_appimage "$selected"
+    fi
+}
+
+# Show list dialog
+show_list_dialog() {
+    local appimages=($(list_appimages))
+    
+    if [ ${#appimages[@]} -eq 0 ]; then
+        zenity --info --width=400 \
+            --title="Không có AppImage" \
+            --text="Không tìm thấy AppImage nào đã được cài đặt."
+        return
+    fi
+    
+    # Prepare list for display (skip the FALSE checkbox values)
+    local display_list=()
+    for ((i=1; i<${#appimages[@]}; i+=3)); do
+        display_list+=("${appimages[i]}" "${appimages[i+1]}")
+    done
+    
+    zenity --list \
+        --title="AppImage đã cài đặt" \
+        --text="Danh sách AppImage trên hệ thống:" \
+        --column="Tên" \
+        --column="Đường dẫn" \
+        --width=700 --height=400 \
+        "${display_list[@]}"
+}
+
+# Clean invalid desktop entries
+clean_invalid_entries() {
+    local cleaned=0
+    local errors=0
+    
+    if [ ! -d "$DESKTOP_DIR" ]; then
+        zenity --info --text="Không tìm thấy thư mục desktop entries."
+        return
+    fi
+    
+    while IFS= read -r desktop_file; do
+        if grep -q "\.AppImage" "$desktop_file" 2>/dev/null; then
+            local exec_line=$(grep "^Exec=" "$desktop_file" | head -1)
+            local appimage_path=$(echo "$exec_line" | sed 's/^Exec=//' | awk '{print $1}')
+            
+            # Check if AppImage file exists
+            if [ ! -f "$appimage_path" ]; then
+                rm "$desktop_file" 2>/dev/null
+                if [ $? -eq 0 ]; then
+                    ((cleaned++))
+                else
+                    ((errors++))
+                fi
+            fi
+        fi
+    done < <(find "$DESKTOP_DIR" -maxdepth 1 -name "*.desktop" -type f 2>/dev/null)
+    
+    update-desktop-database "$DESKTOP_DIR" 2>/dev/null
+    
+    if [ $cleaned -gt 0 ] || [ $errors -gt 0 ]; then
+        zenity --info --width=400 \
+            --title="Dọn dẹp hoàn tất" \
+            --text="✓ Đã dọn dẹp: $cleaned desktop entries không hợp lệ\n✗ Lỗi: $errors entries"
+    else
+        zenity --info --width=400 \
+            --title="Không có gì để dọn" \
+            --text="Tất cả desktop entries đều hợp lệ."
+    fi
+}
+
+# Check if running with an argument (direct uninstall mode)
+if [ -n "$1" ]; then
+    if [ "$1" == "--uninstall" ] && [ -n "$2" ]; then
+        uninstall_appimage "$2"
+    else
+        show_main_menu
+    fi
+else
+    show_main_menu
+fi

@@ -22,7 +22,9 @@
   - Move to ~/Applications and integrate
 - 📱 **Menu integration** - Automatically creates shortcuts in the application menu
 - 🗂️ **Centralized management** - All AppImages stored in ~/Applications
-- 💻 **Beautiful interface** - Uses Zenity for clean dialogs
+- �️ **Easy uninstallation** - AppImage Manager helps remove installed AppImages via GUI
+- 🧹 **Auto cleanup** - Remove invalid desktop entries
+- �💻 **Beautiful interface** - Uses Zenity for clean dialogs
 
 ## 📸 Screenshots
 
@@ -101,7 +103,47 @@ xdg-mime default appimage-launcher.desktop application/x-iso9660-appimage
 appimage-launcher /path/to/your-app.AppImage
 ```
 
-## 🗂️ Directory Structure
+## �️ Uninstalling AppImages
+
+### Method 1: Using AppImage Manager (Recommended)
+
+1. Open **AppImage Manager** from the application menu (System → AppImage Manager)
+2. Select "Uninstall AppImage"
+3. Choose the AppImage you want to remove
+4. Confirm → Done!
+
+### Method 2: From terminal
+
+```bash
+# Open AppImage Manager
+appimage-manager
+
+# Or uninstall directly
+appimage-manager --uninstall /path/to/app.AppImage
+```
+
+### Method 3: Manual
+
+```bash
+# Remove AppImage file
+rm ~/Applications/app-name.AppImage
+
+# Remove desktop entry
+rm ~/.local/share/applications/app-name.desktop
+
+# Update database
+update-desktop-database ~/.local/share/applications/
+```
+
+## 🧹 System Cleanup
+
+AppImage Manager also has a feature to clean up invalid desktop entries (when AppImage files have been deleted but shortcuts remain):
+
+1. Open **AppImage Manager**
+2. Select "Clean invalid desktop entries"
+3. Done!
+
+## �🗂️ Directory Structure
 
 ```
 ~/.local/share/applications/    # Desktop entries (shortcuts)

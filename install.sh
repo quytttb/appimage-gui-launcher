@@ -49,10 +49,16 @@ sudo cp appimage-launcher /usr/local/bin/
 sudo chmod +x /usr/local/bin/appimage-launcher
 echo "✓ Script installed to /usr/local/bin/appimage-launcher"
 
-# Copy the desktop file
+# Copy the manager script
+sudo cp appimage-manager /usr/local/bin/
+sudo chmod +x /usr/local/bin/appimage-manager
+echo "✓ AppImage Manager installed to /usr/local/bin/appimage-manager"
+
+# Copy the desktop files
 mkdir -p ~/.local/share/applications
 cp appimage-launcher.desktop ~/.local/share/applications/
-echo "✓ Desktop entry installed to ~/.local/share/applications/"
+cp appimage-manager.desktop ~/.local/share/applications/
+echo "✓ Desktop entries installed to ~/.local/share/applications/"
 
 # Update desktop database
 update-desktop-database ~/.local/share/applications/ 2>/dev/null
